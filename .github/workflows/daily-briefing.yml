@@ -1,0 +1,27 @@
+name: 每日情报简报
+
+on:
+  schedule:
+    - cron: '30 23 * * *'  # UTC 23:30 = 北京 07:30
+  workflow_dispatch:
+
+jobs:
+  briefing:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装依赖
+        run: sudo apt-get install -y jq curl python3
+
+      - name: 执行采集
+        env:
+          FEISHU_WEBHOOK: ${{ secrets.FEISHU_WEBHOOK }}
+        run: python3 scripts/collect.py
+
+      - name: 记录日志
+        if: always()
+        run: |
+          mkdir -p logs
+          echo "$(date -Iseconds) | ${{ job.status }}" >> logs/run.log
